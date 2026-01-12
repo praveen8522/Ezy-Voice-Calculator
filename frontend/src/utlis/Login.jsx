@@ -1,6 +1,17 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { X, User, Mail, Lock, Phone, LogIn, UserPlus, AlertCircle } from "lucide-react";
+import {
+  X,
+  User,
+  Mail,
+  Lock,
+  Phone,
+  LogIn,
+  UserPlus,
+  AlertCircle,
+  Eye,
+  EyeOff,
+} from "lucide-react";
 import { authService } from "../api/services";
 
 export default function Login() {
@@ -8,6 +19,8 @@ export default function Login() {
   const [activeTab, setActiveTab] = useState("login");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [showLoginPassword, setShowLoginPassword] = useState(false);
+  const [showSignupPassword, setShowSignupPassword] = useState(false);
 
   // Login State
   const [loginData, setLoginData] = useState({
@@ -33,7 +46,9 @@ export default function Login() {
       await authService.login(loginData);
       navigate("/"); // Redirect to home after successful login
     } catch (err) {
-      const errorMessage = err.response?.data?.message || "Login failed. Please check your credentials.";
+      const errorMessage =
+        err.response?.data?.message ||
+        "Login failed. Please check your credentials.";
       setError(errorMessage);
       console.error("Login error:", err);
     } finally {
@@ -47,11 +62,18 @@ export default function Login() {
     setError("");
     setLoading(true);
 
-    try {
-      await authService.register(signupData);
-      navigate("/"); // Redirect to home after successful signup
+  try {
+    const payload = {
+      name: signupData.name,
+      email: signupData.email,
+      password: signupData.password,
+      phone: signupData.phone ? `+91${signupData.phone}` : undefined,
+    };
+    await authService.register(payload);
+    navigate("/"); // Redirect to home after successful signup
     } catch (err) {
-      const errorMessage = err.response?.data?.message || "Signup failed. Please try again.";
+      const errorMessage =
+        err.response?.data?.message || "Signup failed. Please try again.";
       setError(errorMessage);
       console.error("Signup error:", err);
     } finally {
@@ -86,9 +108,8 @@ export default function Login() {
 
       {/* Login/Signup Card */}
       <div className="relative w-full max-w-sm sm:max-w-md md:max-w-lg lg:max-w-md bg-white/90 backdrop-blur-xl border border-gray-200 rounded-2xl shadow-2xl pt-10 px-5 pb-5 sm:p-8 md:p-10 transition-all duration-500 z-10 animate-slideUp mb-8 sm:mb-14 md:mb-20">
-        
         {/* Close Button */}
-        <button 
+        <button
           onClick={() => navigate("/")}
           className="absolute top-3 right-3 sm:top-4 sm:right-4 text-gray-400 hover:text-pink-600 transition"
         >
@@ -98,7 +119,10 @@ export default function Login() {
         {/* Error Message */}
         {error && (
           <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg flex items-start gap-2 animate-shake">
-            <AlertCircle className="text-red-600 flex-shrink-0 mt-0.5" size={18} />
+            <AlertCircle
+              className="text-red-600 flex-shrink-0 mt-0.5"
+              size={18}
+            />
             <p className="text-red-600 text-sm flex-1">{error}</p>
           </div>
         )}
@@ -152,9 +176,9 @@ export default function Login() {
               icon={<Phone size={18} />}
               placeholder="Mobile Number (e.g., +91 9876543210)"
               type="tel"
-              value={signupData.phone}
+              value={`${signupData.phone}`}
               onChange={(e) => {
-                setSignupData({ ...signupData, phone: e.target.value });
+                setSignupData({ ...signupData, phone: e.target.value.replace(/\D/g, "").slice(0, 10), });
                 setError("");
               }}
               required
@@ -170,10 +194,11 @@ export default function Login() {
               }}
               required
             />
-            <InputField
+            <div className="relative">
+              <InputField
               icon={<Lock size={18} />}
               placeholder="Password (min 6 characters)"
-              type="password"
+              type={showSignupPassword ? "text" : "password"}
               value={signupData.password}
               onChange={(e) => {
                 setSignupData({ ...signupData, password: e.target.value });
@@ -181,6 +206,15 @@ export default function Login() {
               }}
               required
             />
+            
+            <button
+              type="button"
+              onClick={() => setShowSignupPassword(!showSignupPassword)}
+              className="absolute right-3 top-3.5 text-gray-500 hover:text-pink-600 transition"
+            >
+              {showSignupPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+            </button>
+            </div>
 
             <button
               onClick={handleSignup}
@@ -190,8 +224,20 @@ export default function Login() {
               {loading ? (
                 <span className="flex items-center gap-2">
                   <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                      fill="none"
+                    />
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                    />
                   </svg>
                   Creating account...
                 </span>
@@ -218,22 +264,31 @@ export default function Login() {
               }}
               required
             />
+            <div className="relative">
             <InputField
               icon={<Lock size={18} />}
               placeholder="Password"
-              type="password"
+              type={showLoginPassword ? "text" : "password"}
               value={loginData.password}
               onChange={(e) => {
                 setLoginData({ ...loginData, password: e.target.value });
                 setError("");
               }}
               onKeyDown={(e) => {
-                if (e.key === 'Enter') {
+                if (e.key === "Enter") {
                   handleLogin(e);
                 }
               }}
               required
             />
+            <button
+              type="button"
+              onClick={() => setShowLoginPassword(!showLoginPassword)}
+              className="absolute right-3 top-3.5 text-gray-500 hover:text-pink-600 transition"
+            >
+              {showLoginPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+            </button>
+            </div>
 
             <button
               onClick={handleLogin}
@@ -243,8 +298,20 @@ export default function Login() {
               {loading ? (
                 <span className="flex items-center gap-2">
                   <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                      fill="none"
+                    />
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                    />
                   </svg>
                   Logging in...
                 </span>
@@ -266,7 +333,8 @@ export default function Login() {
           and{" "}
           <span className="text-purple-600 font-medium hover:underline cursor-pointer">
             Privacy Policy
-          </span>.
+          </span>
+          .
         </p>
       </div>
     </main>
@@ -274,7 +342,15 @@ export default function Login() {
 }
 
 /* Reusable Input Component */
-function InputField({ icon, placeholder, type, value, onChange, required, onKeyDown }) {
+function InputField({
+  icon,
+  placeholder,
+  type,
+  value,
+  onChange,
+  required,
+  onKeyDown,
+}) {
   return (
     <div className="relative mb-4">
       <span className="absolute left-3 top-3.5 text-gray-500">{icon}</span>
@@ -292,7 +368,10 @@ function InputField({ icon, placeholder, type, value, onChange, required, onKeyD
 }
 
 // Add animations
-if (typeof document !== "undefined" && !document.getElementById("login-animations")) {
+if (
+  typeof document !== "undefined" &&
+  !document.getElementById("login-animations")
+) {
   const style = document.createElement("style");
   style.id = "login-animations";
   style.innerHTML = `

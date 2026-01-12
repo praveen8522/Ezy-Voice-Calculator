@@ -155,7 +155,7 @@ class MultiLanguageTTS {
     if (!numberMatch) return text;
 
     const phoneticMap = {
-      "ta-IN": { vidhai: "vitai", pulli: "pulli" },
+      "ta-IN": { vidhai: "விடை", pulli: "pulli" },
       "hi-IN": { jawab: "jawab", hai: "hai", dashamlav: "dashamlav" },
       "te-IN": { samadhanam: "samadhanam", binduvu: "binduvu" },
       "kn-IN": { uttara: "uttara", bindu: "bindu" },
@@ -312,6 +312,7 @@ export default function VoicePopup() {
   const [ttsMethod, setTtsMethod] = useState("");
   const [backendUrl, setBackendUrl] = useState("http://localhost:5000");
   const [recordingStart, setRecordingStart] = useState(null);
+  const [saveStatus, setSaveStatus] = useState("");
 
   const recognitionRef = useRef(null);
   const timeoutRef = useRef(null);
@@ -334,36 +335,57 @@ export default function VoicePopup() {
     };
   }, []);
 
-
-    // Save to backend
+  // Save to backend
   const saveToHistory = async (text, calculatedResult, method, duration) => {
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem("token");
       if (!token) {
-        console.warn('Not logged in, skipping history save');
+        console.warn("Not logged in, skipping history save");
+        setSaveStatus("Not logged in, history not saved");
         return;
       }
 
-      const response = await fetch('http://localhost:5000/api/voice/calculate', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          text,
-          result: calculatedResult,
-          language,
-          method,
-          duration
-        })
+      console.log("💾 Saving to history:", {
+        text,
+        result: calculatedResult,
+        language,
+        method,
+        duration,
       });
 
+      const response = await fetch(
+        "http://localhost:5000/api/voice/calculate",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            text,
+            result: calculatedResult,
+            language,
+            method,
+            duration,
+          }),
+        }
+      );
+
       if (!response.ok) {
-        console.error('Failed to save to history');
+        console.error("Failed to save to history");
+        setSaveStatus(`Error: ${response.status}`);
+        return;
       }
+      const data = await response.json();
+      console.log("✅ Successfully saved to history:", data);
+      setSaveStatus("Saved ✓");
+
+      // Clear status after 3 seconds
+      setTimeout(() => setSaveStatus(""), 3000);
+
+      return { success: true, data };
     } catch (error) {
-      console.error('Error saving to history:', error);
+      console.error("Error saving to history:", error);
     }
   };
 
@@ -443,45 +465,123 @@ export default function VoicePopup() {
       console.log("Step 2 - After phrases:", result);
 
       // Step 2: Replace number words
-    // Step 2: Replace number words
+      // Step 2: Replace number words
       const allNumbers = {
-        'zero': '0', 'one': '1', 'two': '2', 'three': '3', 'four': '4',
-        'five': '5', 'six': '6', 'seven': '7', 'eight': '8', 'nine': '9',
-        'ten': '10', 'eleven': '11', 'twelve': '12', 'thirteen': '13',
-        'fourteen': '14', 'fifteen': '15', 'sixteen': '16', 'seventeen': '17',
-        'eighteen': '18', 'nineteen': '19', 'twenty': '20', 'thirty': '30',
-        'forty': '40', 'fifty': '50', 'sixty': '60', 'seventy': '70',
-        'eighty': '80', 'ninety': '90', 'hundred': '100', 'thousand': '1000',
+        zero: "0",
+        one: "1",
+        two: "2",
+        three: "3",
+        four: "4",
+        five: "5",
+        six: "6",
+        seven: "7",
+        eight: "8",
+        nine: "9",
+        ten: "10",
+        eleven: "11",
+        twelve: "12",
+        thirteen: "13",
+        fourteen: "14",
+        fifteen: "15",
+        sixteen: "16",
+        seventeen: "17",
+        eighteen: "18",
+        nineteen: "19",
+        twenty: "20",
+        thirty: "30",
+        forty: "40",
+        fifty: "50",
+        sixty: "60",
+        seventy: "70",
+        eighty: "80",
+        ninety: "90",
+        hundred: "100",
+        thousand: "1000",
         // Tamil - formal
-        'பூஜ்ஜியம்': '0', 'ஒன்று': '1', 'இரண்டு': '2', 'மூன்று': '3', 'நான்கு': '4',
-        'ஐந்து': '5', 'ஆறு': '6', 'ஏழு': '7', 'எட்டு': '8', 'ஒன்பது': '9', 'பத்து': '10',
+        பூஜ்ஜியம்: "0",
+        ஒன்று: "1",
+        இரண்டு: "2",
+        மூன்று: "3",
+        நான்கு: "4",
+        ஐந்து: "5",
+        ஆறு: "6",
+        ஏழு: "7",
+        எட்டு: "8",
+        ஒன்பது: "9",
+        பத்து: "10",
         // Tamil - colloquial (order matters - longer words first!)
-        'ஒண்னு': '1', 'ஒன்னு': '1',
-        'ரெண்டு': '2', 'ரெண்டு': '2',
-        'மூணு': '3', 'மூனு': '3',
-        'நாலு': '4', 'நாலு': '4',
-        'அஞ்சு': '5', 'ஞ்சு': '5',
-        'ஆறு': '6', 'ஆரு': '6',
-        'ஏழு': '7', 'ஏலு': '7',
-        'எட்டு': '8', 'எட்டு': '8',
-        'ஒம்பது': '9', 'ஒம்போது': '9',
-        'பத்து': '10', 'பத்து': '10',
+        ஒண்னு: "1",
+        ஒன்னு: "1",
+        ரெண்டு: "2",
+        ரெண்டு: "2",
+        மூணு: "3",
+        மூனு: "3",
+        நாலு: "4",
+        நாலு: "4",
+        அஞ்சு: "5",
+        ஞ்சு: "5",
+        ஆறு: "6",
+        ஆரு: "6",
+        ஏழு: "7",
+        ஏலு: "7",
+        எட்டு: "8",
+        எட்டு: "8",
+        ஒம்பது: "9",
+        ஒம்போது: "9",
+        பத்து: "10",
+        பத்து: "10",
         // Hindi
-        'शून्य': '0', 'एक': '1', 'दो': '2', 'तीन': '3', 'चार': '4',
-        'पाँच': '5', 'छह': '6', 'सात': '7', 'आठ': '8', 'नौ': '9', 'दस': '10',
+        शून्य: "0",
+        एक: "1",
+        दो: "2",
+        तीन: "3",
+        चार: "4",
+        पाँच: "5",
+        छह: "6",
+        सात: "7",
+        आठ: "8",
+        नौ: "9",
+        दस: "10",
         // Telugu
-        'సున్నా': '0', 'ఒకటి': '1', 'రెండు': '2', 'మూడు': '3', 'నాలుగు': '4',
-        'ఐదు': '5', 'ఆరు': '6', 'ఏడు': '7', 'ఎనిమిది': '8', 'తొమ్మిది': '9', 'పది': '10',
+        సున్నా: "0",
+        ఒకటి: "1",
+        రెండు: "2",
+        మూడు: "3",
+        నాలుగు: "4",
+        ఐదు: "5",
+        ఆరు: "6",
+        ఏడు: "7",
+        ఎనిమిది: "8",
+        తొమ్మిది: "9",
+        పది: "10",
         // Kannada
-        'ಸೊನ್ನೆ': '0', 'ಒಂದು': '1', 'ಎರಡು': '2', 'ಮೂರು': '3', 'ನಾಲ್ಕು': '4',
-        'ಐದು': '5', 'ಆರು': '6', 'ಏಳು': '7', 'ಎಂಟು': '8', 'ಒಂಬತ್ತು': '9', 'ಹತ್ತು': '10',
+        ಸೊನ್ನೆ: "0",
+        ಒಂದು: "1",
+        ಎರಡು: "2",
+        ಮೂರು: "3",
+        ನಾಲ್ಕು: "4",
+        ಐದು: "5",
+        ಆರು: "6",
+        ಏಳು: "7",
+        ಎಂಟು: "8",
+        ಒಂಬತ್ತು: "9",
+        ಹತ್ತು: "10",
         // Malayalam
-        'പൂജ്യം': '0', 'ഒന്ന്': '1', 'രണ്ട്': '2', 'മൂന്ന്': '3', 'നാല്': '4',
-        'അഞ്ച്': '5', 'ആറ്': '6', 'ഏഴ്': '7', 'എട്ട്': '8', 'ഒമ്പത്': '9', 'പത്ത്': '10',
+        പൂജ്യം: "0",
+        ഒന്ന്: "1",
+        രണ്ട്: "2",
+        മൂന്ന്: "3",
+        നാല്: "4",
+        അഞ്ച്: "5",
+        ആറ്: "6",
+        ഏഴ്: "7",
+        എട്ട്: "8",
+        ഒമ്പത്: "9",
+        പത്ത്: "10",
       };
 
       Object.entries(allNumbers).forEach(([word, digit]) => {
-        const regex = new RegExp(`(^|\\s)${word}(?=\\s|$)`, 'gi');
+        const regex = new RegExp(`(^|\\s)${word}(?=\\s|$)`, "gi");
         const before = result;
         result = result.replace(regex, ` ${digit} `);
         if (before !== result)
@@ -614,9 +714,14 @@ export default function VoicePopup() {
 
       setTimeout(() => {
         const speechText = getSpeechText(calculatedResult, language);
-        speakResult(speechText, language).then(res => {
+        speakResult(speechText, language).then((res) => {
           // Save to history after speaking
-          saveToHistory(manualInput, calculatedResult, duration);
+          saveToHistory(
+            manualInput,
+            calculatedResult,
+            ttsMethod || "Browser TTS",
+            duration
+          );
         });
       }, 100);
     } catch (err) {
@@ -635,7 +740,7 @@ export default function VoicePopup() {
     const resultInWords = convertNumberToWords(result, lang);
 
     const languageResponses = {
-      "ta-IN": `vitai ${resultInWords}`,
+      "ta-IN": `விடை ${resultInWords}`,
       "hi-IN": `jawab ${resultInWords} hai`,
       "en-US": `The answer is ${resultInWords}`,
       "te-IN": `samadhanam ${resultInWords}`,

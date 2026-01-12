@@ -266,7 +266,7 @@ export default function History() {
                 <option value="month">Last 30 Days</option>
               </select>
 
-              <select
+              {/* <select
                 value={typeFilter}
                 onChange={(e) => {
                   setTypeFilter(e.target.value);
@@ -278,7 +278,7 @@ export default function History() {
                 <option value="voice">Voice</option>
                 <option value="command">Command</option>
                 <option value="system">System</option>
-              </select>
+              </select> */}
 
               <select
                 value={languageFilter}
@@ -332,8 +332,8 @@ export default function History() {
                     <th className="p-3 text-left text-sm font-semibold">Input</th>
                     <th className="p-3 text-left text-sm font-semibold">Result</th>
                     <th className="p-3 text-left text-sm font-semibold">Language</th>
-                    <th className="p-3 text-left text-sm font-semibold">Processing</th>
-                    <th className="p-3 text-center text-sm font-semibold">Actions</th>
+                    {/* <th className="p-3 text-left text-sm font-semibold">Processing</th>
+                    <th className="p-3 text-center text-sm font-semibold">Actions</th> */}
                   </tr>
                 </thead>
                 <tbody>
@@ -359,7 +359,7 @@ export default function History() {
                       <td className="p-3 text-sm">
                         {languageLabels[log.language] || log.language}
                       </td>
-                      <td className="p-3 text-xs text-gray-600">
+                      {/* <td className="p-3 text-xs text-gray-600">
                         {log.processingTime ? `${log.processingTime}ms` : '—'}
                       </td>
                       <td className="p-3 text-center">
@@ -370,7 +370,7 @@ export default function History() {
                         >
                           <X size={16} />
                         </button>
-                      </td>
+                      </td> */}
                     </tr>
                   ))}
                 </tbody>
